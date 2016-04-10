@@ -1,6 +1,5 @@
 from django.utils import timezone
 import urllib
-
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from ComplaintSystem.models import AuthorityWorker, Users, Complaints
@@ -51,22 +50,19 @@ def registerNewAuthority(request, authority_name,authority_email,authority_usern
         return JsonResponse(response)
 
 
-def createNewComplaint(request, createComplaint_title, createComplaint_description, creatComplaint_roomNo, createComplaint_origin, createComplaint_levelOfComplaint, createComplaint_category, createComplaint_status_AS, createComplaint_status_RU, createComplaint_username):
-    mytitle = createComplaint_title
+def createNewComplaint(request, createComplaint_title, createComplaint_description, creatComplaint_roomNo, createComplaint_origin, createComplaint_levelOfComplaint, createComplaint_category, createComplaint_username):
+    mytitle = urllib.unquote(createComplaint_title.replace('+', '%20'))
     mydescription = createComplaint_description
     mydescription = urllib.unquote(mydescription.replace('+', '%20'))
     myroomno = creatComplaint_roomNo
     myorigin = createComplaint_origin
     mylevelOfComplaint = createComplaint_levelOfComplaint
     mycategory = createComplaint_category
-    mycreatedDate = timezone.now()
-    mystatus_AS = createComplaint_status_AS
-    mystatus_RU = createComplaint_status_RU
-    createComplaint_lodgedBy = Users.objects.get(username=createComplaint_username)
+    createComplaint_lodgedBy = Users.objects.get(userName=createComplaint_username)
     mylodgedBy = createComplaint_lodgedBy
     try:
-        user = Complaints(title = mytitle, description = mydescription, complaint_roomNo=myroomno, origin = myorigin, levelOfComplaint = mylevelOfComplaint, category = mycategory, createdDate = mycreatedDate, status_AS = mystatus_AS, status_RU = mystatus_RU, lodgedBy = mylodgedBy)
-        user.save()
+        complaint = Complaints(title = mytitle, description = mydescription, complaint_roomNo=myroomno, origin = myorigin, levelOfComplaint = mylevelOfComplaint, category = mycategory, lodgedBy = mylodgedBy)
+        complaint.save()
     except Exception:
         response = {'success':False}
     else:
@@ -92,16 +88,7 @@ def login(request, login_username, login_password):
             'residency': myresidency,
             'room_no': roomNo,
             'primary_id': myuser.id,
-            'contact_number': myuser.contactNo,      #
-            'working_authority': myuser.authority,   #
-            #
-            #
-            #
-            #   Added a few more return attributes
-            #
-            #
-            #
-            #
+            'contact_number': myuser.contactNo,
         }
         response = {
             'success': True,
@@ -127,10 +114,13 @@ def get_RIC(request, userID):
         item_roomNo = item_complaint.complaint_roomNo
         item_origin = item_complaint.origin
         item_level = item_complaint.levelOfComplaint
-        item_createdDate = item_complaint.createdDate
+        item_createdDate = item_complaint.createdDate.date()
         item_resolvedDate = item_complaint.resolvedDate
         item_status_AS = item_complaint.status_AS
         item_status_RU = item_complaint.status_RU
+        user_name = user.name
+        user_email = user.email
+        user_username = user.userName
         item_worker = item_complaint.assignedWorker
         worker_name = item_worker.name
         worker_email = item_worker.email
@@ -147,9 +137,13 @@ def get_RIC(request, userID):
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
             'resolved_or_unresolved': item_status_RU,
+            'byname': user_name,
+            'username':user_username,
+            'user_email': user_email,
             'worker_name': worker_name,
             'worker_email': worker_email,
             'worker_contact_no': worker_contact_no,
+            'comments': {},
         }
         list_of_comp.append(jsonobject)
     response = {
@@ -171,10 +165,13 @@ def get_URIC(request, userID):
         item_roomNo = item_complaint.complaint_roomNo
         item_origin = item_complaint.origin
         item_level = item_complaint.levelOfComplaint
-        item_createdDate = item_complaint.createdDate
+        item_createdDate = item_complaint.createdDate.date()
         item_resolvedDate = item_complaint.resolvedDate
         item_status_AS = item_complaint.status_AS
         item_status_RU = item_complaint.status_RU
+        user_name = user.name
+        user_email = user.email
+        user_username = user.userName
         jsonobject = {
             'id': item_id,
             'title': item_title,
@@ -187,6 +184,10 @@ def get_URIC(request, userID):
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
             'resolved_or_unresolved': item_status_RU,
+            'byname': user_name,
+            'username':user_username,
+            'user_email': user_email,
+            'comments': {},
         }
         list_of_comp.append(jsonobject)
     response = {
@@ -208,10 +209,14 @@ def get_RHC(request, hostel_name):
         item_roomNo = item_complaint.complaint_roomNo
         item_origin = item_complaint.origin
         item_level = item_complaint.levelOfComplaint
-        item_createdDate = item_complaint.createdDate
+        item_createdDate = item_complaint.createdDate.date()
         item_resolvedDate = item_complaint.resolvedDate
         item_status_AS = item_complaint.status_AS
         item_status_RU = item_complaint.status_RU
+        user = item_complaint.lodgedBy
+        user_name = user.name
+        user_email = user.email
+        user_username = user.userName
         jsonobject = {
             'id': item_id,
             'title': item_title,
@@ -224,6 +229,9 @@ def get_RHC(request, hostel_name):
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
             'resolved_or_unresolved': item_status_RU,
+            'byname': user_name,
+            'username':user_username,
+            'user_email': user_email,
         }
         list_of_comp.append(jsonobject)
     response = {
@@ -243,10 +251,11 @@ def get_URHC(request, hostel_name):
         item_roomNo = item_complaint.complaint_roomNo
         item_origin = item_complaint.origin
         item_level = item_complaint.levelOfComplaint
-        item_createdDate = item_complaint.createdDate
+        item_createdDate = item_complaint.createdDate.date()
         item_resolvedDate = item_complaint.resolvedDate
         item_status_AS = item_complaint.status_AS
         item_status_RU = item_complaint.status_RU
+        created_byUser = item_complaint.lodgedBy
         jsonobject = {
             'id': item_id,
             'title': item_title,
@@ -259,6 +268,8 @@ def get_URHC(request, hostel_name):
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
             'resolved_or_unresolved': item_status_RU,
+            'byname': created_byUser.name,
+            'username': created_byUser.userName,
         }
         list_of_comp.append(jsonobject)
     response = {
@@ -279,10 +290,11 @@ def get_RIsC(request):
         item_roomNo = item_complaint.complaint_roomNo
         item_origin = item_complaint.origin
         item_level = item_complaint.levelOfComplaint
-        item_createdDate = item_complaint.createdDate
+        item_createdDate = item_complaint.createdDate.date()
         item_resolvedDate = item_complaint.resolvedDate
         item_status_AS = item_complaint.status_AS
         item_status_RU = item_complaint.status_RU
+        created_byUser = item_complaint.lodgedBy
         jsonobject = {
             'id': item_id,
             'title': item_title,
@@ -295,6 +307,8 @@ def get_RIsC(request):
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
             'resolved_or_unresolved': item_status_RU,
+            'byname': created_byUser.name,
+            'username': created_byUser.userName,
         }
         list_of_comp.append(jsonobject)
     response = {
@@ -304,7 +318,7 @@ def get_RIsC(request):
 
 
 def get_URIsC(request):
-    complaints = Complaints.objects.filter(status_RU=True, levelOfComplaint='instituteLevel')
+    complaints = Complaints.objects.filter(status_RU=False, levelOfComplaint='instituteLevel')
     list_of_comp = []
     for item_complaint in complaints:
         item_id = item_complaint.id
@@ -314,10 +328,11 @@ def get_URIsC(request):
         item_roomNo = item_complaint.complaint_roomNo
         item_origin = item_complaint.origin
         item_level = item_complaint.levelOfComplaint
-        item_createdDate = item_complaint.createdDate
+        item_createdDate = item_complaint.createdDate.date()
         item_resolvedDate = item_complaint.resolvedDate
         item_status_AS = item_complaint.status_AS
         item_status_RU = item_complaint.status_RU
+        created_byUser = item_complaint.lodgedBy
         jsonobject = {
             'id': item_id,
             'title': item_title,
@@ -330,6 +345,8 @@ def get_URIsC(request):
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
             'resolved_or_unresolved': item_status_RU,
+            'byname': created_byUser.name,
+            'username': created_byUser.userName,
         }
         list_of_comp.append(jsonobject)
     response = {
@@ -352,24 +369,26 @@ def upDownVoteComplaint(request, complaintID, vote):
     return JsonResponse({'success': True})
 
 
-def returnJSON(request):
-    shama = {
-        "id": "rnd",
-        "name": "shama",
-        "number": "19",
-        "time": "130",
-        "status": "true"
-    }
-    rohit = {
-        "id": "rj",
-        "name": "rohit",
-        "number": "15",
-        "time": "130",
-        "status": "true"
-    }
-    pickup = [rohit]
-    pickup.append(shama)
-    response = {
-        'pickup' : pickup
-    }
-    return JsonResponse(response)
+def testing_createComplaint(request, createComplaint_title, username):
+    myuser = Users.objects.get(userName=username)
+    complaint = Complaints(title = createComplaint_title, description = 'This is just description', complaint_roomNo='D73', origin = 'Karakoram', levelOfComplaint = 'instituteLevel', category = 'plumber', lodgedBy = myuser)
+    complaint.save()
+    return JsonResponse({'success': True})
+
+
+def returncomments(request, complaintID):
+    complaint = Complaints.objects.get(id = complaintID)
+    commentsList = []
+    for comment in complaint.comments_set.all():
+        title = comment.comment_title
+        date = comment.comment_date
+        creator = comment.comment_by.name
+        jsonobject = {
+            'title': title,
+            'date': date,
+            'creator': creator,
+        }
+        commentsList.append(jsonobject)
+    return JsonResponse({
+        'list_of_comments': commentsList
+    })

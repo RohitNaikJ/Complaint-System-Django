@@ -79,9 +79,9 @@ class Complaints(models.Model):
         ('Jwalamukhi', 'Jwalamukhi'),
         ('Udaigiri', 'Udaigiri'),
         ('Institute', 'IIT Delhi'),
-        ('Individual House', 'Individual House'),
+        ('Individual', 'Individual House'),
      )
-     complaint_roomNo = models.CharField(max_length=40, default='0')
+     complaint_roomNo = models.CharField(max_length=40, default='0', null=True, blank=True)
      origin = models.CharField(choices=TYPES_OF_ORIGIN, max_length=20, default='Karakoram')
      levelOfComplaint = models.CharField(choices=LEVEL_OF_COMPLAINT, max_length=15)
      category = models.CharField(choices=TYPES_OF_CATOGERY, default='others', max_length=15)
@@ -104,8 +104,9 @@ class Complaints(models.Model):
          return self.title
 
 class Comments(models.Model):
-     comment_text = models.CharField(max_length=100,default='')
+     comment_title = models.CharField(max_length=100,default='')
+     comment_date = models.DateTimeField(auto_now_add=True)
      complaint = models.ForeignKey(Complaints, on_delete=models.CASCADE)
      comment_by = models.ForeignKey(Users,on_delete=models.CASCADE)
      def __str__(self):
-         return self.comment_text
+         return self.comment_title

@@ -35,11 +35,11 @@
       <column name="createdDate" sqlType="DATETIME" precision="0" scale="-1" nullable="false" jdbcType="12"/>
       <column name="resolvedDate" sqlType="DATE" precision="0" scale="-1" nullable="true" jdbcType="12"/>
       <column name="lodgedBy_id" sqlType="INTEGER" precision="0" scale="-1" nullable="false" jdbcType="4"/>
-      <column name="complaint_roomNo" sqlType="VARCHAR(40)" precision="0" scale="-1" nullable="false" jdbcType="12"/>
       <column name="status_AS" sqlType="BOOL" precision="0" scale="-1" nullable="false" jdbcType="4"/>
       <column name="status_RU" sqlType="BOOL" precision="0" scale="-1" nullable="false" jdbcType="4"/>
       <column name="assignedWorker_id" sqlType="INTEGER" precision="0" scale="-1" nullable="true" jdbcType="4"/>
       <column name="votes" sqlType="INTEGER" precision="0" scale="-1" nullable="false" jdbcType="4"/>
+      <column name="complaint_roomNo" sqlType="VARCHAR(40)" precision="0" scale="-1" nullable="true" jdbcType="12"/>
       <primary-key columns="id"/>
       <foreign-key name="#FAKE_ComplaintSystem_complaints_1" columns="assignedWorker_id" ref-table="ComplaintSystem_authorityworker" ref-schema="" ref-catalog="" ref-columns="id" update-rule="3" delete-rule="3" deferrability="1"/>
       <foreign-key name="#FAKE_ComplaintSystem_complaints_2" columns="lodgedBy_id" ref-table="ComplaintSystem_users" ref-schema="" ref-catalog="" ref-columns="id" update-rule="3" delete-rule="3" deferrability="1"/>
