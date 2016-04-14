@@ -38,13 +38,13 @@ class AuthorityWorker(models.Model):
     userName = models.CharField(max_length=40, default='vinay', unique=True)
     password = models.CharField(max_length=40, default='vinay')
     WORKING_AUTHORITY = (
-        ('Electrician', 'Electrician'),
-        ('Plumber', 'Plumber'),
-        ('Carpenter', 'Carpenter'),
-        ('Security', 'Security'),
-        ('CSC', 'Computer Services Center'),
+        ('electricity', 'Electrician'),
+        ('plumber', 'Plumber'),
+        ('carpenter', 'Carpenter'),
+        ('security', 'Security'),
+        ('csc', 'Computer Services Center'),
     )
-    type = models.CharField(max_length=12, choices=WORKING_AUTHORITY, default='Electrician')
+    type = models.CharField(max_length=12, choices=WORKING_AUTHORITY, default='electrician')
     contactNo = models.BigIntegerField(default=9910272880)
 
     def __str__(self):

@@ -70,6 +70,30 @@ def createNewComplaint(request, createComplaint_title, createComplaint_descripti
     finally:
         return JsonResponse(response)
 
+def loginA(request, login_username, login_password):
+    if AuthorityWorker.objects.filter(userName=login_username, password=login_password).exists():
+        myuser = AuthorityWorker.objects.get(userName=login_username)
+        myname = myuser.name
+        myemail = myuser.email
+        mytype = myuser.type
+        info = {
+            'name': myname,
+            'email': myemail,
+            'username': login_username,
+            'password': login_password,
+            'type': mytype,
+            'primary_id': myuser.id,
+            'contact_number': myuser.contactNo,
+        }
+        response = {
+            'success': True,
+            'details': info,
+        }
+    else:
+        response = {
+            'success': False,
+        }
+    return JsonResponse(response)
 
 def login(request, login_username, login_password):
     if Users.objects.filter(userName=login_username, password=login_password).exists():
@@ -122,9 +146,9 @@ def get_RIC(request, userID):
         user_email = user.email
         user_username = user.userName
         item_worker = item_complaint.assignedWorker
-        worker_name = item_worker.name
-        worker_email = item_worker.email
-        worker_contact_no = item_worker.contactNo
+        # worker_name = item_worker.name
+        # worker_email = item_worker.email
+        # worker_contact_no = item_worker.contactNo
         jsonobject = {
             'id': item_id,
             'title': item_title,
@@ -140,9 +164,9 @@ def get_RIC(request, userID):
             'byname': user_name,
             'username':user_username,
             'user_email': user_email,
-            'worker_name': worker_name,
-            'worker_email': worker_email,
-            'worker_contact_no': worker_contact_no,
+            # 'worker_name': worker_name,
+            # 'worker_email': worker_email,
+            # 'worker_contact_no': worker_contact_no,
             'comments': {},
         }
         list_of_comp.append(jsonobject)
@@ -264,6 +288,7 @@ def get_URHC(request, hostel_name):
             'room_no': item_roomNo,
             'origin': item_origin,
             'level': item_level,
+            'votes': item_complaint.votes,
             'date_created': item_createdDate,
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
@@ -341,6 +366,7 @@ def get_URIsC(request):
             'room_no': item_roomNo,
             'origin': item_origin,
             'level': item_level,
+            'votes': item_complaint.votes,
             'date_created': item_createdDate,
             'date_resolved': item_resolvedDate,
             'assigned_or_unassigned': item_status_AS,
@@ -355,16 +381,100 @@ def get_URIsC(request):
     return JsonResponse(response)
 
 
+def getResolved(request, auth_id):
+    worker = AuthorityWorker.objects.get(id = auth_id)
+    complaintsList = Complaints.objects.filter(category = worker.type, status_RU=True)
+    ansList = []
+    for item_complaint in complaintsList:
+        item_id = item_complaint.id
+        item_title = item_complaint.title
+        item_description = item_complaint.description
+        item_category = item_complaint.category
+        item_roomNo = item_complaint.complaint_roomNo
+        item_origin = item_complaint.origin
+        item_level = item_complaint.levelOfComplaint
+        item_createdDate = item_complaint.createdDate.date()
+        item_resolvedDate = item_complaint.resolvedDate
+        item_status_AS = item_complaint.status_AS
+        item_status_RU = item_complaint.status_RU
+        created_byUser = item_complaint.lodgedBy
+        jsonobject = {
+            'id': item_id,
+            'title': item_title,
+            'description': item_description,
+            'category': item_category,
+            'room_no': item_roomNo,
+            'origin': item_origin,
+            'level': item_level,
+            'votes': item_complaint.votes,
+            'date_created': item_createdDate,
+            'date_resolved': item_resolvedDate,
+            'assigned_or_unassigned': item_status_AS,
+            'resolved_or_unresolved': item_status_RU,
+            'byname': created_byUser.name,
+            'username': created_byUser.userName,
+        }
+        ansList.append(jsonobject)
+    response = {
+        'List_of_resolved_complaints': ansList
+    }
+    return JsonResponse(response)
+
+
+def getUnresolved(request, auth_id):
+    worker = AuthorityWorker.objects.get(id = auth_id)
+    complaintsList = Complaints.objects.filter(category = worker.type, status_RU=False)
+    ansList = []
+    for item_complaint in complaintsList:
+        item_id = item_complaint.id
+        item_title = item_complaint.title
+        item_description = item_complaint.description
+        item_category = item_complaint.category
+        item_roomNo = item_complaint.complaint_roomNo
+        item_origin = item_complaint.origin
+        item_level = item_complaint.levelOfComplaint
+        item_createdDate = item_complaint.createdDate.date()
+        item_resolvedDate = item_complaint.resolvedDate
+        item_status_AS = item_complaint.status_AS
+        item_status_RU = item_complaint.status_RU
+        created_byUser = item_complaint.lodgedBy
+        jsonobject = {
+            'id': item_id,
+            'title': item_title,
+            'description': item_description,
+            'category': item_category,
+            'room_no': item_roomNo,
+            'origin': item_origin,
+            'level': item_level,
+            'votes': item_complaint.votes,
+            'date_created': item_createdDate,
+            'date_resolved': item_resolvedDate,
+            'assigned_or_unassigned': item_status_AS,
+            'resolved_or_unresolved': item_status_RU,
+            'byname': created_byUser.name,
+            'username': created_byUser.userName,
+        }
+        ansList.append(jsonobject)
+    response = {
+        'List_of_unresolved_complaints': ansList
+    }
+    return JsonResponse(response)
+
+
 def resolveComplaint(request, complaintID):
     complaint = Complaints.objects.get(id=complaintID)
     complaint.status_RU = True
+    complaint.resolvedDate = timezone.now()
     complaint.save()
     return JsonResponse({'success': True})
 
 
 def upDownVoteComplaint(request, complaintID, vote):
     complaint = Complaints.objects.get(id=complaintID)
-    complaint.votes += vote
+    if(vote == 0):
+        complaint.votes -= 1
+    else:
+        complaint.votes += 1
     complaint.save()
     return JsonResponse({'success': True})
 
@@ -392,3 +502,14 @@ def returncomments(request, complaintID):
     return JsonResponse({
         'list_of_comments': commentsList
     })
+
+
+def createComment(request, userID, complaintID, commentText):
+    user = Users.objects.get(id = userID)
+    complaint = Complaints.objects.get(id = complaintID)
+    complaint.comments_set.create(comment_title = urllib.unquote(commentText.replace('+', '%20')), comment_by = user)
+    return JsonResponse({
+        'success': True,
+    })
+
+
